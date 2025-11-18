@@ -19,7 +19,7 @@ __Distribution Site__ : <https://clipy-app.com>
 
 <img src="http://clipy-app.com/img/screenshot1.png" width="400">
 
-### What's New in 2.0
+### What's New in 2.1
 * 🚀 **Swift 6.0** - Modern Swift with latest language features and strict concurrency
 * 🎯 **macOS 15 Sequoia** - Built exclusively for the latest macOS
 * 🔍 **Search** - Lightning-fast search through clipboard history (⌘F)
