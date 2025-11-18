@@ -11,6 +11,7 @@
 //
 
 import Cocoa
+import SwiftUI
 import Sparkle
 import RxCocoa
 import RxSwift
@@ -21,7 +22,8 @@ import RxScreeen
 import RealmSwift
 import LetsMove
 
-@NSApplicationMain
+@main
+@MainActor
 class AppDelegate: NSObject, NSMenuItemValidation {
 
     // MARK: - Properties
@@ -54,7 +56,24 @@ class AppDelegate: NSObject, NSMenuItemValidation {
     // MARK: - Menu Actions
     @objc func showPreferenceWindow() {
         NSApp.activate(ignoringOtherApps: true)
-        CPYPreferencesWindowController.sharedController.showWindow(self)
+        if #available(macOS 15.0, *) {
+            showModernSettings()
+        } else {
+            CPYPreferencesWindowController.sharedController.showWindow(self)
+        }
+    }
+
+    @available(macOS 15.0, *)
+    private func showModernSettings() {
+        let settingsView = ModernSettingsView()
+        let hostingController = NSHostingController(rootView: settingsView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Clipy Settings"
+        window.styleMask = [.titled, .closable, .resizable]
+        window.setContentSize(NSSize(width: 600, height: 500))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
     }
 
     @objc func showSnippetEditorWindow() {

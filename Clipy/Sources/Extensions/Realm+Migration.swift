@@ -15,7 +15,7 @@ import RealmSwift
 
 extension Realm {
     static func migration() {
-        let config = Realm.Configuration(schemaVersion: 7, migrationBlock: { migration, oldSchemaVersion in
+        let config = Realm.Configuration(schemaVersion: 8, migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion <= 2 {
                 // Add identifier in CPYSnippet
                 migration.enumerateObjects(ofType: CPYSnippet.className()) { _, newObject in
@@ -55,6 +55,17 @@ extension Realm {
                         newObject!["identifier"] = oldObject!["identifier"]
                     }
                 })
+            }
+            if oldSchemaVersion <= 7 {
+                // Add favorite properties to CPYClip
+                migration.enumerateObjects(ofType: CPYClip.className()) { _, newObject in
+                    if newObject!["isFavorite"] == nil {
+                        newObject!["isFavorite"] = false
+                    }
+                    if newObject!["favoriteIndex"] == nil {
+                        newObject!["favoriteIndex"] = 0
+                    }
+                }
             }
         })
         Realm.Configuration.defaultConfiguration = config

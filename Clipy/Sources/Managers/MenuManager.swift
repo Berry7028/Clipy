@@ -16,6 +16,7 @@ import RealmSwift
 import RxCocoa
 import RxSwift
 
+@MainActor
 final class MenuManager: NSObject {
 
     // MARK: - Properties
@@ -179,6 +180,7 @@ private extension MenuManager {
         historyMenu = NSMenu(title: Constants.Menu.history)
         snippetMenu = NSMenu(title: Constants.Menu.snippet)
 
+        addFavoriteItems(clipMenu!)
         addHistoryItems(clipMenu!)
         addHistoryItems(historyMenu!)
 
@@ -186,6 +188,13 @@ private extension MenuManager {
         addSnippetItems(snippetMenu!, separateMenu: false)
 
         clipMenu?.addItem(NSMenuItem.separator())
+
+        // Search menu item
+        let searchItem = NSMenuItem(title: "Search Clipboard History...", action: #selector(showSearchWindow))
+        searchItem.keyEquivalent = "f"
+        searchItem.keyEquivalentModifierMask = .command
+        searchItem.target = self
+        clipMenu?.addItem(searchItem)
 
         if AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.addClearHistoryMenuItem) {
             clipMenu?.addItem(NSMenuItem(title: L10n.clearHistory, action: #selector(AppDelegate.clearAllHistory)))
@@ -197,6 +206,10 @@ private extension MenuManager {
         clipMenu?.addItem(NSMenuItem(title: L10n.quitClipy, action: #selector(AppDelegate.terminate)))
 
         statusItem?.menu = clipMenu
+    }
+
+    @objc func showSearchWindow() {
+        CPYSearchWindowController.shared.show()
     }
 
     func menuItemTitle(_ title: String, listNumber: NSInteger, isMarkWithNumber: Bool) -> String {
@@ -257,6 +270,37 @@ private extension MenuManager {
 
 // MARK: - Clips
 private extension MenuManager {
+    func addFavoriteItems(_ menu: NSMenu) {
+        let favoriteClips = realm.objects(CPYClip.self)
+            .filter("isFavorite == true")
+            .sorted(byKeyPath: #keyPath(CPYClip.favoriteIndex), ascending: true)
+
+        guard !favoriteClips.isEmpty else { return }
+
+        // Favorites title
+        let labelItem = NSMenuItem(title: "⭐ Favorites", action: nil)
+        labelItem.isEnabled = false
+        menu.addItem(labelItem)
+
+        // Favorite clips
+        let firstIndex = firstIndexOfMenuItems()
+        var listNumber = firstIndex
+
+        for (index, clip) in favoriteClips.enumerated() {
+            let menuItem = makeFavoriteClipMenuItem(clip, index: index, listNumber: listNumber)
+            menu.addItem(menuItem)
+            listNumber += 1
+        }
+
+        menu.addItem(NSMenuItem.separator())
+    }
+
+    func makeFavoriteClipMenuItem(_ clip: CPYClip, index: Int, listNumber: Int) -> NSMenuItem {
+        let menuItem = makeClipMenuItem(clip, index: index, listNumber: listNumber)
+        menuItem.title = "⭐ " + menuItem.title
+        return menuItem
+    }
+
     func addHistoryItems(_ menu: NSMenu) {
         let placeInLine = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.numberOfItemsPlaceInline)
         let placeInsideFolder = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.numberOfItemsPlaceInsideFolder)
@@ -365,7 +409,61 @@ private extension MenuManager {
             }
         }
 
+        // Add context menu for favoriting and preview
+        let contextMenu = NSMenu()
+
+        // Preview item (macOS 15+)
+        if #available(macOS 15.0, *) {
+            let previewItem = NSMenuItem(
+                title: "Preview",
+                action: #selector(showPreview(_:)),
+                keyEquivalent: ""
+            )
+            previewItem.target = self
+            previewItem.representedObject = clip.dataHash
+            contextMenu.addItem(previewItem)
+            contextMenu.addItem(NSMenuItem.separator())
+        }
+
+        // Favorite item
+        let favoriteItem = NSMenuItem(
+            title: clip.isFavorite ? "Remove from Favorites" : "Add to Favorites",
+            action: #selector(toggleFavorite(_:)),
+            keyEquivalent: ""
+        )
+        favoriteItem.target = self
+        favoriteItem.representedObject = clip.dataHash
+        contextMenu.addItem(favoriteItem)
+
+        menuItem.menu = contextMenu
+
         return menuItem
+    }
+
+    @available(macOS 15.0, *)
+    @objc func showPreview(_ sender: NSMenuItem) {
+        guard let dataHash = sender.representedObject as? String else { return }
+        guard let clip = realm.object(ofType: CPYClip.self, forPrimaryKey: dataHash) else { return }
+
+        ClipPreviewWindowController.shared.show(clip: clip)
+    }
+
+    @objc func toggleFavorite(_ sender: NSMenuItem) {
+        guard let dataHash = sender.representedObject as? String else { return }
+        guard let clip = realm.object(ofType: CPYClip.self, forPrimaryKey: dataHash) else { return }
+
+        try? realm.write {
+            clip.isFavorite.toggle()
+            if clip.isFavorite {
+                // Set favorite index to current max + 1
+                let maxIndex = realm.objects(CPYClip.self)
+                    .filter("isFavorite == true")
+                    .max(ofProperty: "favoriteIndex") as Int? ?? -1
+                clip.favoriteIndex = maxIndex + 1
+            }
+        }
+
+        createClipMenu()
     }
 }
 
