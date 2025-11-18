@@ -13,16 +13,23 @@ Clipy is a Clipboard extension app for macOS.
 
 ---
 
-__Requirement__: macOS 10.10 Yosemite or higher
+__Requirement__: macOS 12.0 Monterey or higher
 
 __Distribution Site__ : <https://clipy-app.com>
 
 <img src="http://clipy-app.com/img/screenshot1.png" width="400">
 
+### What's New in 2.0
+* 🚀 **Swift 6.0** - Modern Swift with latest language features
+* 🎯 **macOS 12+** - Optimized for modern macOS versions
+* 🔍 **Search** - Quick search through clipboard history (⌘F)
+* ⭐ **Favorites** - Pin frequently used clipboard items
+* 🎨 **Improved UI** - Enhanced user interface with better accessibility
+
 ### Development Environment
-* macOS 10.15 Catalina
-* Xcode 12.2
-* Swift 5.3
+* macOS 12.0 Monterey or higher
+* Xcode 15.0 or higher
+* Swift 6.0
 
 ### How to Build
 0. Move to the project root directory

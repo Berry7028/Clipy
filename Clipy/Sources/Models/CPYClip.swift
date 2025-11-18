@@ -23,6 +23,8 @@ final class CPYClip: Object {
     @objc dynamic var updateTime = 0
     @objc dynamic var thumbnailPath = ""
     @objc dynamic var isColorCode = false
+    @objc dynamic var isFavorite = false
+    @objc dynamic var favoriteIndex = 0
 
     // MARK: Primary Key
     override static func primaryKey() -> String? {

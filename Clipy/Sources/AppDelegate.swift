@@ -21,7 +21,8 @@ import RxScreeen
 import RealmSwift
 import LetsMove
 
-@NSApplicationMain
+@main
+@MainActor
 class AppDelegate: NSObject, NSMenuItemValidation {
 
     // MARK: - Properties
