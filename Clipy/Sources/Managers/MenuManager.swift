@@ -409,8 +409,23 @@ private extension MenuManager {
             }
         }
 
-        // Add context menu for favoriting
+        // Add context menu for favoriting and preview
         let contextMenu = NSMenu()
+
+        // Preview item (macOS 15+)
+        if #available(macOS 15.0, *) {
+            let previewItem = NSMenuItem(
+                title: "Preview",
+                action: #selector(showPreview(_:)),
+                keyEquivalent: ""
+            )
+            previewItem.target = self
+            previewItem.representedObject = clip.dataHash
+            contextMenu.addItem(previewItem)
+            contextMenu.addItem(NSMenuItem.separator())
+        }
+
+        // Favorite item
         let favoriteItem = NSMenuItem(
             title: clip.isFavorite ? "Remove from Favorites" : "Add to Favorites",
             action: #selector(toggleFavorite(_:)),
@@ -419,9 +434,18 @@ private extension MenuManager {
         favoriteItem.target = self
         favoriteItem.representedObject = clip.dataHash
         contextMenu.addItem(favoriteItem)
+
         menuItem.menu = contextMenu
 
         return menuItem
+    }
+
+    @available(macOS 15.0, *)
+    @objc func showPreview(_ sender: NSMenuItem) {
+        guard let dataHash = sender.representedObject as? String else { return }
+        guard let clip = realm.object(ofType: CPYClip.self, forPrimaryKey: dataHash) else { return }
+
+        ClipPreviewWindowController.shared.show(clip: clip)
     }
 
     @objc func toggleFavorite(_ sender: NSMenuItem) {
