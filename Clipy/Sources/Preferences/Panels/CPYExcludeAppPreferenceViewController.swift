@@ -7,58 +7,97 @@
 //
 //  Created by Econa77 on 2016/08/08.
 //
-//  Copyright © 2015-2018 Clipy Project.
+//  Copyright (c) 2015-2018 Clipy Project.
 //
 
 import Cocoa
+import SwiftUI
+import UniformTypeIdentifiers
 
-class CPYExcludeAppPreferenceViewController: NSViewController {
-    // MARK: - Properties
-    @IBOutlet private weak var tableView: NSTableView!
+final class CPYExcludeAppPreferenceViewController: NSViewController {}
+
+struct ExcludedApplicationsPreferencePane: View {
+    @State private var applications = AppEnvironment.current.excludeAppService.applications
+    @State private var selectedIdentifier: String?
+
+    var body: some View {
+        PreferenceForm {
+            Section(String(localized: "Exclude these applications:")) {
+                if applications.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "app.dashed")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.secondary)
+                        Text(String(localized: "No excluded applications"))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 180)
+                } else {
+                    List(selection: $selectedIdentifier) {
+                        ForEach(applications, id: \.identifier) { app in
+                            Text(app.name)
+                                .tag(app.identifier)
+                        }
+                    }
+                    .frame(minHeight: 220)
+                }
+
+                HStack {
+                    Button {
+                        addApplications()
+                    } label: {
+                        Label(String(localized: "Add"), systemImage: "plus")
+                    }
+
+                    Button {
+                        deleteSelectedApplication()
+                    } label: {
+                        Label(String(localized: "Remove"), systemImage: "minus")
+                    }
+                    .disabled(selectedIdentifier == nil)
+
+                    Spacer()
+                }
+            }
+        }
+    }
 }
 
-// MARK: - IBActions
-extension CPYExcludeAppPreferenceViewController {
-    @IBAction private func addAppButtonTapped(_ sender: AnyObject) {
+private extension ExcludedApplicationsPreferencePane {
+    func addApplications() {
         let openPanel = NSOpenPanel()
-        openPanel.allowedFileTypes = ["app"]
+        openPanel.allowedContentTypes = [.applicationBundle]
         openPanel.allowsMultipleSelection = true
         openPanel.resolvesAliases = true
         openPanel.prompt = String(localized: "Add")
+
         let directories = NSSearchPathForDirectoriesInDomains(.applicationDirectory, .localDomainMask, true)
-        let basePath = (directories.isEmpty) ? NSHomeDirectory() : directories.first!
+        let basePath = directories.first ?? NSHomeDirectory()
         openPanel.directoryURL = URL(fileURLWithPath: basePath)
 
-        let returnCode = openPanel.runModal()
-        if returnCode != NSApplication.ModalResponse.OK { return }
+        guard openPanel.runModal() == .OK else { return }
 
-        let fileURLs = openPanel.urls
-        fileURLs.forEach {
-            guard let bundle = Bundle(url: $0), let info = bundle.infoDictionary else { return }
-            guard let appInfo = CPYAppInfo(info: info as [String: AnyObject]) else { return }
+        openPanel.urls.forEach { url in
+            guard let bundle = Bundle(url: url),
+                  let info = bundle.infoDictionary as? [String: AnyObject],
+                  let appInfo = CPYAppInfo(info: info) else { return }
             AppEnvironment.current.excludeAppService.add(with: appInfo)
         }
-        tableView.reloadData()
+        reloadApplications()
     }
 
-    @IBAction private func deleteAppButtonTapped(_ sender: AnyObject) {
-        let index = tableView.selectedRow
-        if index == -1 {
+    func deleteSelectedApplication() {
+        guard let selectedIdentifier,
+              let app = applications.first(where: { $0.identifier == selectedIdentifier }) else {
             NSSound.beep()
             return
         }
-        AppEnvironment.current.excludeAppService.delete(with: index)
-        tableView.reloadData()
-    }
-}
-
-// MARK: - NSTableView DataSource
-extension CPYExcludeAppPreferenceViewController: NSTableViewDataSource {
-    func numberOfRows(in tableView: NSTableView) -> Int {
-        return AppEnvironment.current.excludeAppService.applications.count
+        AppEnvironment.current.excludeAppService.delete(with: app)
+        self.selectedIdentifier = nil
+        reloadApplications()
     }
 
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
-        return AppEnvironment.current.excludeAppService.applications[safe: row]?.name
+    func reloadApplications() {
+        applications = AppEnvironment.current.excludeAppService.applications
     }
 }

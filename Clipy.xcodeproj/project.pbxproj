@@ -74,19 +74,11 @@
 		FA1DB4EA1DDCB49C007F95C8 /* CPYSnippetsEditorCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4E21DDCB49C007F95C8 /* CPYSnippetsEditorCell.swift */; };
 		FA1DB4EB1DDCB49C007F95C8 /* CPYPlaceHolderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4E41DDCB49C007F95C8 /* CPYPlaceHolderTextView.swift */; };
 		FA1DB5121DDCB4C0007F95C8 /* CPYPreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4ED1DDCB4C0007F95C8 /* CPYPreferencesWindowController.swift */; };
-		FA1DB5131DDCB4C0007F95C8 /* CPYPreferencesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4EE1DDCB4C0007F95C8 /* CPYPreferencesWindowController.xib */; };
 		FA1DB5141DDCB4C0007F95C8 /* CPYBetaPreferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4F21DDCB4C0007F95C8 /* CPYBetaPreferenceViewController.swift */; };
 		FA1DB5151DDCB4C0007F95C8 /* CPYExcludeAppPreferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4F31DDCB4C0007F95C8 /* CPYExcludeAppPreferenceViewController.swift */; };
 		FA1DB5161DDCB4C0007F95C8 /* CPYShortcutsPreferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4F41DDCB4C0007F95C8 /* CPYShortcutsPreferenceViewController.swift */; };
 		FA1DB5171DDCB4C0007F95C8 /* CPYTypePreferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4F51DDCB4C0007F95C8 /* CPYTypePreferenceViewController.swift */; };
 		FA1DB5181DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB4F61DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.swift */; };
-		FA1DB5191DDCB4C0007F95C8 /* CPYBetaPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4F71DDCB4C0007F95C8 /* CPYBetaPreferenceViewController.xib */; };
-		FA1DB51A1DDCB4C0007F95C8 /* CPYExcludeAppPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4F91DDCB4C0007F95C8 /* CPYExcludeAppPreferenceViewController.xib */; };
-		FA1DB51B1DDCB4C0007F95C8 /* CPYGeneralPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4FB1DDCB4C0007F95C8 /* CPYGeneralPreferenceViewController.xib */; };
-		FA1DB51C1DDCB4C0007F95C8 /* CPYMenuPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4FD1DDCB4C0007F95C8 /* CPYMenuPreferenceViewController.xib */; };
-		FA1DB51D1DDCB4C0007F95C8 /* CPYShortcutsPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB4FF1DDCB4C0007F95C8 /* CPYShortcutsPreferenceViewController.xib */; };
-		FA1DB51E1DDCB4C0007F95C8 /* CPYTypePreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB5011DDCB4C0007F95C8 /* CPYTypePreferenceViewController.xib */; };
-		FA1DB51F1DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB5031DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.xib */; };
 		FA1DB5201DDCB4C0007F95C8 /* CPYSnippetsEditorWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1DB50D1DDCB4C0007F95C8 /* CPYSnippetsEditorWindowController.swift */; };
 		FA1DB5221DDCB4C0007F95C8 /* CPYSnippetsEditorWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = FA1DB50F1DDCB4C0007F95C8 /* CPYSnippetsEditorWindowController.xib */; };
 		FA3778931F3B691A003B5BAB /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3778921F3B691A003B5BAB /* AppEnvironment.swift */; };
@@ -789,16 +781,8 @@
 		FAC43DC41B35D8B100C06102 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				FA1DB5131DDCB4C0007F95C8 /* CPYPreferencesWindowController.xib in Resources */,
 				FA6DD5141C7DEDB600317E73 /* (null) in Resources */,
-				FA1DB51E1DDCB4C0007F95C8 /* CPYTypePreferenceViewController.xib in Resources */,
 				FA1DB4901DDCA5D9007F95C8 /* Assets.xcassets in Resources */,
-				FA1DB51D1DDCB4C0007F95C8 /* CPYShortcutsPreferenceViewController.xib in Resources */,
-				FA1DB51F1DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.xib in Resources */,
-				FA1DB51C1DDCB4C0007F95C8 /* CPYMenuPreferenceViewController.xib in Resources */,
-				FA1DB51B1DDCB4C0007F95C8 /* CPYGeneralPreferenceViewController.xib in Resources */,
-				FA1DB51A1DDCB4C0007F95C8 /* CPYExcludeAppPreferenceViewController.xib in Resources */,
-				FA1DB5191DDCB4C0007F95C8 /* CPYBetaPreferenceViewController.xib in Resources */,
 				FA6DD5151C7DEDB600317E73 /* (null) in Resources */,
 				C576AD7C2FBD345000B71213 /* Localizable.xcstrings in Resources */,
 				FA1DB4941DDCB22C007F95C8 /* dsa_pub.pem in Resources */,

@@ -12,6 +12,7 @@
 
 import Cocoa
 import CryptoKit
+import ImageIO
 import SwiftHEXColors
 
 struct PasteboardContent: Equatable {
@@ -32,22 +33,32 @@ struct PasteboardContent: Equatable {
         guard let data = data(for: .string) ?? data(for: .deprecatedString) else { return "" }
         return String(data: data, encoding: .utf8) ?? ""
     }
+    var title: String {
+        let title = stringValue
+        if !title.isEmpty {
+            return title
+        }
+        if isImageContent {
+            return "Image"
+        }
+        return ""
+    }
     var colorCodeImage: NSImage? {
         guard let color = NSColor(hexString: stringValue) else { return nil }
         return NSImage.create(with: color, size: NSSize(width: 20, height: 20))
     }
     var thumbnailImage: NSImage? {
         let defaults = UserDefaults.standard
-        let width = defaults.integer(forKey: Constants.UserDefaults.thumbnailWidth)
-        let height = defaults.integer(forKey: Constants.UserDefaults.thumbnailHeight)
+        let width = max(defaults.integer(forKey: Constants.UserDefaults.thumbnailWidth), 1)
+        let height = max(defaults.integer(forKey: Constants.UserDefaults.thumbnailHeight), 1)
 
         let imageURL = assets.filter { $0.type == .fileURL }
             .compactMap { URL(dataRepresentation: $0.data, relativeTo: nil) }
             .first(where: { ["jpg", "jpeg", "png", "bmp", "tiff"].contains($0.pathExtension.lowercased()) })
         if let imageURL {
-            return NSImage(contentsOf: imageURL)?.resizeImage(CGFloat(width), CGFloat(height))
+            return Self.downsampledImage(url: imageURL, width: width, height: height)
         } else if let data = data(for: .png) ?? data(for: .tiff) ?? data(for: .deprecatedTIFF) {
-            return NSImage(data: data)?.resizeImage(CGFloat(width), CGFloat(height))
+            return Self.downsampledImage(data: data, width: width, height: height)
         }
         return nil
     }
@@ -107,8 +118,13 @@ struct PasteboardContent: Equatable {
     }
 
     init?(image: NSImage) {
-        guard let data = image.tiffRepresentation else { return nil }
-        self.init(assets: [Asset(type: .tiff, data: data)])
+        if let data = image.pngRepresentation {
+            self.init(assets: [Asset(type: .png, data: data)])
+        } else if let data = image.tiffRepresentation {
+            self.init(assets: [Asset(type: .tiff, data: data)])
+        } else {
+            return nil
+        }
     }
 }
 
@@ -129,8 +145,47 @@ extension PasteboardContent {
 }
 
 private extension PasteboardContent {
+    var isImageContent: Bool {
+        assets.contains {
+            $0.type == .png || $0.type == .tiff || $0.type == .deprecatedTIFF
+        }
+    }
+
     func data(for type: NSPasteboard.PasteboardType) -> Data? {
         assets.first(where: { $0.type == type })?.data
+    }
+
+    static func downsampledImage(data: Data, width: Int, height: Int) -> NSImage? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let imageSource = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
+        return downsampledImage(from: imageSource, width: width, height: height)
+    }
+
+    static func downsampledImage(url: URL, width: Int, height: Int) -> NSImage? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+        return downsampledImage(from: imageSource, width: width, height: height)
+    }
+
+    static func downsampledImage(from imageSource: CGImageSource, width: Int, height: Int) -> NSImage? {
+        let maxPixelSize = max(width, height)
+        let options = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+        ] as CFDictionary
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) else { return nil }
+        let image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        return image.aspectFitImage(CGFloat(width), CGFloat(height))
+    }
+}
+
+private extension NSImage {
+    var pngRepresentation: Data? {
+        guard let tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffRepresentation) else { return nil }
+        return bitmap.representation(using: .png, properties: [:])
     }
 }
 

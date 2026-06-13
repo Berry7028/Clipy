@@ -22,7 +22,7 @@ final class ClipService {
     // MARK: - Properties
     fileprivate var cachedChangeCount = BehaviorRelay<Int>(value: 0)
     fileprivate var storeTypes = [String: NSNumber]()
-    fileprivate let scheduler = SerialDispatchQueueScheduler(qos: .userInteractive)
+    fileprivate let scheduler = SerialDispatchQueueScheduler(qos: .utility)
     fileprivate let lock = NSRecursiveLock(name: "com.clipy-app.Clipy.ClipUpdatable")
     fileprivate var disposeBag = DisposeBag()
 
@@ -118,5 +118,7 @@ extension ClipService {
 
         let unixTime = Int(Date().timeIntervalSince1970)
         pasteboardHistoryRepository.save(id: .init(rawValue: savedHash), content: content, updateAt: unixTime)
+        let maxHistorySize = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.maxHistorySize)
+        pasteboardHistoryRepository.deleteOverflowingHistories(maxHistorySize: maxHistorySize)
     }
 }
