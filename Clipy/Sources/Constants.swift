@@ -67,6 +67,7 @@ struct Constants {
         static let excludeApplications = "kCPYExcludeApplications"
         static let collectCrashReport = "kCPYCollectCrashReport"
         static let showColorPreviewInTheMenu = "kCPYPrefShowColorPreviewInTheMenu"
+        static let showPreviewOnHover = "showPreviewOnHover"
         static let ignoreConcealedPasteboardType = "kCPYPrefIgnoreConcealedPasteboardType"
     }
 

@@ -25,6 +25,8 @@
 		C57100032FCEB00000C8F965 /* PasteboardHistoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57100022FCEB00000C8F965 /* PasteboardHistoryRepository.swift */; };
 		C57100052FCEB01000C8F965 /* PasteboardHistoryRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57100042FCEB01000C8F965 /* PasteboardHistoryRepositoryTests.swift */; };
 		C57100072FCEB02000C8F965 /* PasteboardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57100062FCEB02000C8F965 /* PasteboardContent.swift */; };
+		C5C11B0000000000000000B1 /* ClipMenuItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C11A0000000000000000A1 /* ClipMenuItemView.swift */; };
+		C5C11B0000000000000000B2 /* ClipPreviewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C11A0000000000000000A2 /* ClipPreviewController.swift */; };
 		C571000A2FCEB03000C8F965 /* PasteboardContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C571000B2FCEB03000C8F965 /* PasteboardContentTests.swift */; };
 		C57100112FCEB45000C8F965 /* NSImage+ResizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57100102FCEB45000C8F965 /* NSImage+ResizeTests.swift */; };
 		C57447202FD09FC6000D64D3 /* CPYClip.swift in Sources */ = {isa = PBXBuildFile; fileRef = C574471B2FD09FC6000D64D3 /* CPYClip.swift */; };
@@ -134,6 +136,8 @@
 		C57100022FCEB00000C8F965 /* PasteboardHistoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardHistoryRepository.swift; sourceTree = "<group>"; };
 		C57100042FCEB01000C8F965 /* PasteboardHistoryRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardHistoryRepositoryTests.swift; sourceTree = "<group>"; };
 		C57100062FCEB02000C8F965 /* PasteboardContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardContent.swift; sourceTree = "<group>"; };
+		C5C11A0000000000000000A1 /* ClipMenuItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipMenuItemView.swift; sourceTree = "<group>"; };
+		C5C11A0000000000000000A2 /* ClipPreviewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipPreviewController.swift; sourceTree = "<group>"; };
 		C571000B2FCEB03000C8F965 /* PasteboardContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardContentTests.swift; sourceTree = "<group>"; };
 		C57100102FCEB45000C8F965 /* NSImage+ResizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+ResizeTests.swift"; sourceTree = "<group>"; };
 		C574471A2FD09FC6000D64D3 /* DatabaseMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigration.swift; sourceTree = "<group>"; };
@@ -466,6 +470,8 @@
 		FA1DB4DB1DDCB49C007F95C8 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C5C11A0000000000000000A1 /* ClipMenuItemView.swift */,
+				C5C11A0000000000000000A2 /* ClipPreviewController.swift */,
 				FA1DB4DC1DDCB49C007F95C8 /* DesignableView */,
 				FA1DB4DF1DDCB49C007F95C8 /* SplitViews */,
 				FA1DB4E11DDCB49C007F95C8 /* TableViewCell */,
@@ -803,6 +809,8 @@
 				FA1DB4E81DDCB49C007F95C8 /* CPYDesignableView.swift in Sources */,
 				FA1DB5181DDCB4C0007F95C8 /* CPYUpdatesPreferenceViewController.swift in Sources */,
 				C57100072FCEB02000C8F965 /* PasteboardContent.swift in Sources */,
+				C5C11B0000000000000000B1 /* ClipMenuItemView.swift in Sources */,
+				C5C11B0000000000000000B2 /* ClipPreviewController.swift in Sources */,
 				C57447202FD09FC6000D64D3 /* CPYClip.swift in Sources */,
 				C57447212FD09FC6000D64D3 /* CPYSnippet.swift in Sources */,
 				C57447222FD09FC6000D64D3 /* CPYClipData.swift in Sources */,

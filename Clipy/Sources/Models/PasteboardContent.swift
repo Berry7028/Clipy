@@ -144,6 +144,34 @@ extension PasteboardContent {
     }
 }
 
+// MARK: - Hover Preview
+extension PasteboardContent {
+    /// A larger image used for the hover preview. Reuses the same downsampling pipeline as the
+    /// menu thumbnail, but bounded by `maxPixelSize` on the longest side.
+    func previewImage(maxPixelSize: Int) -> NSImage? {
+        let imageURL = assets.filter { $0.type == .fileURL }
+            .compactMap { URL(dataRepresentation: $0.data, relativeTo: nil) }
+            .first(where: { ["jpg", "jpeg", "png", "bmp", "tiff"].contains($0.pathExtension.lowercased()) })
+        if let imageURL {
+            return Self.downsampledImage(url: imageURL, width: maxPixelSize, height: maxPixelSize)
+        } else if let data = data(for: .png) ?? data(for: .tiff) ?? data(for: .deprecatedTIFF) {
+            return Self.downsampledImage(data: data, width: maxPixelSize, height: maxPixelSize)
+        }
+        return nil
+    }
+
+    /// Raw PDF data, if the content represents a PDF.
+    var pdfData: Data? {
+        data(for: .pdf) ?? data(for: .deprecatedPDF)
+    }
+
+    /// File URLs carried by the content, if any.
+    var fileURLs: [URL] {
+        assets.filter { $0.type == .fileURL }
+            .compactMap { URL(dataRepresentation: $0.data, relativeTo: nil) }
+    }
+}
+
 private extension PasteboardContent {
     var isImageContent: Bool {
         assets.contains {

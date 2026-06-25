@@ -30,6 +30,10 @@ final class MenuManager: NSObject {
         item.menu = clipMenu
         return item
     }()
+    // Hover preview
+    private let previewController = ClipPreviewController()
+    // Cache of source-application icons keyed by bundle identifier.
+    private var appIconCache = [String: NSImage]()
     // Icon Cache
     private let folderIcon = NSImage(resource: .iconFolder)
     private let snippetIcon = NSImage(resource: .iconText)
@@ -169,6 +173,8 @@ private extension MenuManager {
                                         .compactMap { $0 }.distinctUntilChanged().map { _ in })
         menuChangedObservables.append(defaults.rx.observe(Bool.self, Constants.UserDefaults.showColorPreviewInTheMenu, options: [.new], retainSelf: false)
                                         .compactMap { $0 }.distinctUntilChanged().map { _ in })
+        menuChangedObservables.append(defaults.rx.observe(Bool.self, Constants.UserDefaults.showPreviewOnHover, options: [.new], retainSelf: false)
+                                        .compactMap { $0 }.distinctUntilChanged().map { _ in })
         Observable.merge(menuChangedObservables)
             .throttle(.seconds(1), scheduler: MainScheduler.instance)
             .asDriver(onErrorDriveWith: .empty())
@@ -182,9 +188,13 @@ private extension MenuManager {
 // MARK: - Menus
 private extension MenuManager {
      func createClipMenu() {
+        previewController.hide()
         clipMenu = NSMenu(title: Constants.Application.name)
         historyMenu = NSMenu(title: Constants.Menu.history)
         snippetMenu = NSMenu(title: Constants.Menu.snippet)
+        clipMenu?.delegate = self
+        historyMenu?.delegate = self
+        snippetMenu?.delegate = self
 
         addHistoryItems(clipMenu!)
         addHistoryItems(historyMenu!)
@@ -210,21 +220,9 @@ private extension MenuManager {
         return (isMarkWithNumber) ? "\(listNumber). \(title)" : title
     }
 
-    func makeSubmenuItem(_ count: Int, start: Int, end: Int, numberOfItems: Int) -> NSMenuItem {
-        var count = count
-        if start == 0 {
-            count -= 1
-        }
-        var lastNumber = count + numberOfItems
-        if end < lastNumber {
-            lastNumber = end
-        }
-        let menuItemTitle = "\(count + 1) - \(lastNumber)"
-        return makeSubmenuItem(menuItemTitle)
-    }
-
     func makeSubmenuItem(_ title: String) -> NSMenuItem {
         let subMenu = NSMenu(title: "")
+        subMenu.delegate = self
         let subMenuItem = NSMenuItem(title: title, action: nil)
         subMenuItem.submenu = subMenu
         subMenuItem.image = (AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.showIconInTheMenu)) ? folderIcon : nil
@@ -267,11 +265,6 @@ private extension MenuManager {
         menu.addItem(labelItem)
 
         // History
-        let firstIndex = firstIndexOfMenuItems()
-        var listNumber = firstIndex
-        var subMenuCount = placeInLine
-        var subMenuIndex = 1 + placeInLine
-
         let ascending = !AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.reorderClipsAfterPasting)
         let isShowImage = AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.showImageInTheMenu)
         let isShowColorCode = AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.showColorPreviewInTheMenu)
@@ -280,36 +273,53 @@ private extension MenuManager {
             includesThumbnailAsset: isShowImage || isShowColorCode,
             limit: maxHistory
         )
-        let currentSize = historyDetails.count
-        var i = 0
-        historyDetails.forEach { historyDetail in
-            if placeInLine < 1 || placeInLine - 1 < i {
-                // Folder
-                if i == subMenuCount {
-                    let subMenuItem = makeSubmenuItem(subMenuCount, start: firstIndex, end: currentSize, numberOfItems: placeInsideFolder)
-                    menu.addItem(subMenuItem)
-                    listNumber = firstIndex
-                }
 
-                // Clip
-                if let subMenu = menu.item(at: subMenuIndex)?.submenu {
-                    let menuItem = makeClipMenuItem(historyDetail, index: i, listNumber: listNumber)
-                    subMenu.addItem(menuItem)
-                    listNumber += 1
-                }
-            } else {
-                // Clip
-                let menuItem = makeClipMenuItem(historyDetail, index: i, listNumber: listNumber)
-                menu.addItem(menuItem)
-                listNumber += 1
-            }
+        // Show the most recent clips inline, then collapse the rest behind nested "Show More" submenus.
+        let pageSize = max(1, placeInsideFolder)
+        let inlineCount = (placeInLine > 0) ? placeInLine : pageSize
+        appendHistoryPage(
+            historyDetails,
+            to: menu,
+            startOffset: 0,
+            listNumber: firstIndexOfMenuItems(),
+            pageSize: inlineCount,
+            nextPageSize: pageSize
+        )
+    }
 
-            i += 1
-            if i == subMenuCount + placeInsideFolder {
-                subMenuCount += placeInsideFolder
-                subMenuIndex += 1
-            }
+    func appendHistoryPage(
+        _ details: [PasteboardHistoryDetail],
+        to menu: NSMenu,
+        startOffset: Int,
+        listNumber: Int,
+        pageSize: Int,
+        nextPageSize: Int
+    ) {
+        var number = listNumber
+        let end = min(startOffset + pageSize, details.count)
+        for i in startOffset..<end {
+            menu.addItem(makeClipMenuItem(details[i], index: i, listNumber: number))
+            number += 1
         }
+        guard end < details.count else { return }
+
+        // Overflow: a "Show More" submenu that recursively pages through the remaining clips.
+        let moreItem = NSMenuItem(title: String(localized: "Show More"), action: nil)
+        if AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.showIconInTheMenu) {
+            moreItem.image = folderIcon
+        }
+        let subMenu = NSMenu(title: "")
+        subMenu.delegate = self
+        moreItem.submenu = subMenu
+        menu.addItem(moreItem)
+        appendHistoryPage(
+            details,
+            to: subMenu,
+            startOffset: end,
+            listNumber: number,
+            pageSize: nextPageSize,
+            nextPageSize: nextPageSize
+        )
     }
 
     func makeClipMenuItem(_ historyDetail: PasteboardHistoryDetail, index: Int, listNumber: Int) -> NSMenuItem {
@@ -360,6 +370,15 @@ private extension MenuManager {
             let width = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.thumbnailWidth)
             let height = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.thumbnailHeight)
             menuItem.image = image.aspectFitImage(CGFloat(width), CGFloat(height))
+        }
+
+        if AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.showPreviewOnHover) {
+            menuItem.view = ClipMenuItemView(
+                title: menuItem.title,
+                thumbnail: menuItem.image,
+                appIcon: appIcon(forBundleID: history.sourceAppBundleID),
+                historyID: history.id
+            )
         }
 
         return menuItem
@@ -443,5 +462,34 @@ private extension MenuManager {
 private extension MenuManager {
     func firstIndexOfMenuItems() -> NSInteger {
         return AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.menuItemsTitleStartWithZero) ? 0 : 1
+    }
+
+    /// Returns the (cached) icon of the application a clip was copied from, sized for a menu row.
+    func appIcon(forBundleID bundleID: String?) -> NSImage? {
+        guard let bundleID, !bundleID.isEmpty else { return nil }
+        if let cached = appIconCache[bundleID] { return cached }
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
+        let icon = NSWorkspace.shared.icon(forFile: url.path)
+        icon.size = NSSize(width: 16, height: 16)
+        appIconCache[bundleID] = icon
+        return icon
+    }
+}
+
+// MARK: - NSMenuDelegate
+extension MenuManager: NSMenuDelegate {
+    func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
+        // Drive the hover preview from the menu's own highlight signal. This is stable while the
+        // pointer stays within a row, so the preview no longer flickers on minor mouse movement.
+        guard let view = item?.view as? ClipMenuItemView,
+              let anchorRect = view.anchorRectOnScreen else {
+            previewController.scheduleHide()
+            return
+        }
+        previewController.show(id: view.historyID, anchorRect: anchorRect)
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        previewController.hide()
     }
 }
