@@ -93,17 +93,20 @@ extension ClipService {
         guard !AppEnvironment.current.excludeAppService.copiedProcessIsExcludedApplications(pasteboard: pasteboard) else { return }
 
         guard let content = PasteboardContent(pasteboard: pasteboard, types: types) else { return }
-        save(content)
+        // The frontmost application at capture time is the app the clip was copied from.
+        let sourceAppBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        save(content, sourceAppBundleID: sourceAppBundleID)
     }
 
     func create(with image: NSImage) {
         lock.lock(); defer { lock.unlock() }
 
         guard let content = PasteboardContent(image: image) else { return }
-        save(content)
+        let sourceAppBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        save(content, sourceAppBundleID: sourceAppBundleID)
     }
 
-    private func save(_ content: PasteboardContent) {
+    private func save(_ content: PasteboardContent, sourceAppBundleID: String?) {
         // Copy already copied history
         let isCopySameHistory = AppEnvironment.current.defaults.bool(forKey: Constants.UserDefaults.copySameHistory)
         let historyID = PasteboardHistory.ID(rawValue: content.hash)
@@ -117,7 +120,7 @@ extension ClipService {
         let savedHash = (isOverwriteHistory) ? content.hash : UUID().uuidString
 
         let unixTime = Int(Date().timeIntervalSince1970)
-        pasteboardHistoryRepository.save(id: .init(rawValue: savedHash), content: content, updateAt: unixTime)
+        pasteboardHistoryRepository.save(id: .init(rawValue: savedHash), content: content, sourceAppBundleID: sourceAppBundleID, updateAt: unixTime)
         let maxHistorySize = AppEnvironment.current.defaults.integer(forKey: Constants.UserDefaults.maxHistorySize)
         pasteboardHistoryRepository.deleteOverflowingHistories(maxHistorySize: maxHistorySize)
     }

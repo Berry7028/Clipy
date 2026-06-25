@@ -192,6 +192,8 @@ struct MenuPreferencePane: View {
     private var thumbnailWidth = 100
     @AppStorage(Constants.UserDefaults.thumbnailHeight)
     private var thumbnailHeight = 32
+    @AppStorage(Constants.UserDefaults.showPreviewOnHover)
+    private var showPreviewOnHover = true
 
     var body: some View {
         PreferenceForm {
@@ -248,6 +250,7 @@ struct MenuPreferencePane: View {
             }
 
             Section(String(localized: "Image Previews")) {
+                Toggle(String(localized: "Show preview on hover"), isOn: $showPreviewOnHover)
                 Toggle(String(localized: "Show Image"), isOn: $showImageInTheMenu)
                 Toggle(String(localized: "Show color code preview"), isOn: $showColorPreviewInTheMenu)
                 IntegerStepperRow(

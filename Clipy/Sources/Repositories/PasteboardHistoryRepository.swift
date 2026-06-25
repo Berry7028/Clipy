@@ -26,10 +26,17 @@ protocol PasteboardHistoryRepositoryProtocol {
     func fetchHistory(id: PasteboardHistory.ID) -> PasteboardHistory?
     func fetchContent(id: PasteboardHistory.ID) -> PasteboardContent?
 
-    func save(id: PasteboardHistory.ID, content: PasteboardContent, updateAt: Int)
+    func save(id: PasteboardHistory.ID, content: PasteboardContent, sourceAppBundleID: String?, updateAt: Int)
     func deleteHistory(id: PasteboardHistory.ID)
     func deleteAll()
     func deleteOverflowingHistories(maxHistorySize: Int)
+}
+
+extension PasteboardHistoryRepositoryProtocol {
+    /// Convenience for callers that do not track a source application (e.g. tests, legacy migration).
+    func save(id: PasteboardHistory.ID, content: PasteboardContent, updateAt: Int) {
+        save(id: id, content: content, sourceAppBundleID: nil, updateAt: updateAt)
+    }
 }
 
 final class PasteboardHistoryRepository: PasteboardHistoryRepositoryProtocol {
@@ -110,13 +117,14 @@ final class PasteboardHistoryRepository: PasteboardHistoryRepositoryProtocol {
         }
     }
 
-    func save(id: PasteboardHistory.ID, content: PasteboardContent, updateAt: Int) {
+    func save(id: PasteboardHistory.ID, content: PasteboardContent, sourceAppBundleID: String?, updateAt: Int) {
         let history = PasteboardHistory(
             id: id,
             title: content.title[0...10000],
             pasteboardTypes: content.types,
             updateAt: updateAt,
-            deviceID: CPYUtilities.deviceID
+            deviceID: CPYUtilities.deviceID,
+            sourceAppBundleID: sourceAppBundleID
         )
         withErrorReporting {
             try database.write { database in

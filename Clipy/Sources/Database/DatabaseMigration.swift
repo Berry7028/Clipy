@@ -58,7 +58,8 @@ struct DatabaseMigration {
                         title: clip.title,
                         pasteboardTypes: content.types,
                         updateAt: clip.updateTime,
-                        deviceID: CPYUtilities.deviceID
+                        deviceID: CPYUtilities.deviceID,
+                        sourceAppBundleID: nil
                     )
                 }
                 if assetsByHistoryID[id] == nil {
