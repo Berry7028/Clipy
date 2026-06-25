@@ -7,154 +7,283 @@
 //
 //  Created by Econa77 on 2016/02/25.
 //
-//  Copyright © 2015-2018 Clipy Project.
+//  Copyright (c) 2015-2018 Clipy Project.
 //
 
 import Cocoa
+import SwiftUI
 
 final class CPYPreferencesWindowController: NSWindowController {
 
     // MARK: - Properties
-    static let sharedController = CPYPreferencesWindowController(windowNibName: "CPYPreferencesWindowController")
-    @IBOutlet private weak var toolBar: NSView!
-    // ImageViews
-    @IBOutlet private weak var generalImageView: NSImageView!
-    @IBOutlet private weak var menuImageView: NSImageView!
-    @IBOutlet private weak var typeImageView: NSImageView!
-    @IBOutlet private weak var excludeImageView: NSImageView!
-    @IBOutlet private weak var shortcutsImageView: NSImageView!
-    @IBOutlet private weak var updatesImageView: NSImageView!
-    @IBOutlet private weak var betaImageView: NSImageView!
-    // Labels
-    @IBOutlet private weak var generalTextField: NSTextField!
-    @IBOutlet private weak var menuTextField: NSTextField!
-    @IBOutlet private weak var typeTextField: NSTextField!
-    @IBOutlet private weak var excludeTextField: NSTextField!
-    @IBOutlet private weak var shortcutsTextField: NSTextField!
-    @IBOutlet private weak var updatesTextField: NSTextField!
-    @IBOutlet private weak var betaTextField: NSTextField!
-    // Buttons
-    @IBOutlet private weak var generalButton: NSButton!
-    @IBOutlet private weak var menuButton: NSButton!
-    @IBOutlet private weak var typeButton: NSButton!
-    @IBOutlet private weak var excludeButton: NSButton!
-    @IBOutlet private weak var shortcutsButton: NSButton!
-    @IBOutlet private weak var updatesButton: NSButton!
-    @IBOutlet private weak var betaButton: NSButton!
-    // ViewController
-    private let viewController = [NSViewController(nibName: "CPYGeneralPreferenceViewController", bundle: nil),
-                                  NSViewController(nibName: "CPYMenuPreferenceViewController", bundle: nil),
-                                  CPYTypePreferenceViewController(nibName: "CPYTypePreferenceViewController", bundle: nil),
-                                  CPYExcludeAppPreferenceViewController(nibName: "CPYExcludeAppPreferenceViewController", bundle: nil),
-                                  CPYShortcutsPreferenceViewController(nibName: "CPYShortcutsPreferenceViewController", bundle: nil),
-                                  CPYUpdatesPreferenceViewController(nibName: "CPYUpdatesPreferenceViewController", bundle: nil),
-                                  CPYBetaPreferenceViewController(nibName: "CPYBetaPreferenceViewController", bundle: nil)]
+    static let sharedController = CPYPreferencesWindowController()
+
+    // MARK: - Initialize
+    init() {
+        let hostingController = NSHostingController(rootView: CPYPreferencesView())
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = String(localized: "Preferences")
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 580, height: 420)
+        window.setContentSize(NSSize(width: 640, height: 560))
+        window.center()
+
+        super.init(window: window)
+        window.delegate = self
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Window Life Cycle
-    override func windowDidLoad() {
-        super.windowDidLoad()
-        // Temporarily disable Dark Mode until this window is migrated to SwiftUI.
-        self.window?.appearance = NSAppearance(named: .aqua)
-        self.window?.backgroundColor = NSColor(white: 0.99, alpha: 1)
-        self.window?.titlebarAppearsTransparent = true
-        toolBarItemTapped(generalButton)
-        generalButton.sendAction(on: .leftMouseDown)
-        menuButton.sendAction(on: .leftMouseDown)
-        typeButton.sendAction(on: .leftMouseDown)
-        excludeButton.sendAction(on: .leftMouseDown)
-        shortcutsButton.sendAction(on: .leftMouseDown)
-        updatesButton.sendAction(on: .leftMouseDown)
-        betaButton.sendAction(on: .leftMouseDown)
-    }
-
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
+        window?.centerIfNeeded()
         window?.orderFrontRegardless()
-    }
-}
-
-// MARK: - IBActions
-extension CPYPreferencesWindowController {
-    @IBAction private func toolBarItemTapped(_ sender: NSButton) {
-        selectedTab(sender.tag)
-        switchView(sender.tag)
     }
 }
 
 // MARK: - NSWindow Delegate
 extension CPYPreferencesWindowController: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        if let window = window, !window.makeFirstResponder(window) {
+        if let window, !window.makeFirstResponder(window) {
             window.endEditing(for: nil)
         }
         NSApp.deactivate()
     }
 }
 
-// MARK: - Layout
-private extension CPYPreferencesWindowController {
-    func resetImages() {
-        generalImageView.image = NSImage(resource: .prefGeneral)
-        menuImageView.image = NSImage(resource: .prefMenu)
-        typeImageView.image = NSImage(resource: .prefType)
-        excludeImageView.image = NSImage(resource: .prefExcluded)
-        shortcutsImageView.image = NSImage(resource: .prefShortcut)
-        updatesImageView.image = NSImage(resource: .prefUpdate)
-        betaImageView.image = NSImage(resource: .prefBeta)
-
-        generalTextField.textColor = NSColor(resource: .tabTitle)
-        menuTextField.textColor = NSColor(resource: .tabTitle)
-        typeTextField.textColor = NSColor(resource: .tabTitle)
-        excludeTextField.textColor = NSColor(resource: .tabTitle)
-        shortcutsTextField.textColor = NSColor(resource: .tabTitle)
-        updatesTextField.textColor = NSColor(resource: .tabTitle)
-        betaTextField.textColor = NSColor(resource: .tabTitle)
+private extension NSWindow {
+    func centerIfNeeded() {
+        guard frame.origin == .zero else { return }
+        center()
     }
+}
 
-    func selectedTab(_ index: Int) {
-        resetImages()
+struct CPYPreferencesView: View {
+    var body: some View {
+        TabView {
+            GeneralPreferencePane()
+                .tabItem { Label(String(localized: "General"), systemImage: "gearshape") }
 
-        switch index {
-        case 0:
-            generalImageView.image = NSImage(resource: .prefGeneralOn)
-            generalTextField.textColor = NSColor(resource: .clipy)
-        case 1:
-            menuImageView.image = NSImage(resource: .prefMenuOn)
-            menuTextField.textColor = NSColor(resource: .clipy)
-        case 2:
-            typeImageView.image = NSImage(resource: .prefTypeOn)
-            typeTextField.textColor = NSColor(resource: .clipy)
-        case 3:
-            excludeImageView.image = NSImage(resource: .prefExcludedOn)
-            excludeTextField.textColor = NSColor(resource: .clipy)
-        case 4:
-            shortcutsImageView.image = NSImage(resource: .prefShortcutOn)
-            shortcutsTextField.textColor = NSColor(resource: .clipy)
-        case 5:
-            updatesImageView.image = NSImage(resource: .prefUpdateOn)
-            updatesTextField.textColor = NSColor(resource: .clipy)
-        case 6:
-            betaImageView.image = NSImage(resource: .prefBetaOn)
-            betaTextField.textColor = NSColor(resource: .clipy)
-        default: break
+            MenuPreferencePane()
+                .tabItem { Label(String(localized: "Menu"), systemImage: "menubar.rectangle") }
+
+            ClipboardTypesPreferencePane()
+                .tabItem { Label(String(localized: "Type"), systemImage: "doc.on.clipboard") }
+
+            ExcludedApplicationsPreferencePane()
+                .tabItem { Label(String(localized: "Exclude"), systemImage: "app.badge") }
+
+            ShortcutsPreferencePane()
+                .tabItem { Label(String(localized: "Shortcuts"), systemImage: "keyboard") }
+
+            UpdatesPreferencePane()
+                .tabItem { Label(String(localized: "Updates"), systemImage: "arrow.triangle.2.circlepath") }
+
+            BetaPreferencePane()
+                .tabItem { Label(String(localized: "Beta"), systemImage: "testtube.2") }
         }
+        .padding(20)
+        .frame(minWidth: 580, idealWidth: 640, minHeight: 420, idealHeight: 560)
+    }
+}
+
+struct PreferenceForm<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
     }
 
-    func switchView(_ index: Int) {
-        let newView = viewController[index].view
-        // Remove current views without toolbar
-        window?.contentView?.subviews.forEach { view in
-            if view != toolBar {
-                view.removeFromSuperview()
+    var body: some View {
+        Form {
+            content
+        }
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+    }
+}
+
+struct GeneralPreferencePane: View {
+    @AppStorage(Constants.UserDefaults.loginItem)
+    private var loginItem = false
+    @AppStorage(Constants.UserDefaults.inputPasteCommand)
+    private var inputPasteCommand = true
+    @AppStorage(Constants.UserDefaults.collectCrashReport)
+    private var collectCrashReport = true
+    @AppStorage(Constants.UserDefaults.maxHistorySize)
+    private var maxHistorySize = 30
+    @AppStorage(Constants.UserDefaults.reorderClipsAfterPasting)
+    private var reorderClipsAfterPasting = true
+    @AppStorage(Constants.UserDefaults.showStatusItem)
+    private var showStatusItem = 1
+
+    var body: some View {
+        PreferenceForm {
+            Section(String(localized: "Behavior")) {
+                Toggle(String(localized: "Launch on Login"), isOn: $loginItem)
+                Toggle(String(localized: "Input \"⌘ + V\" after menu item selection"), isOn: $inputPasteCommand)
+                Toggle(String(localized: "Send crash report and error log (reflected at the next launch)"), isOn: $collectCrashReport)
+            }
+
+            Section(String(localized: "Clipboard History")) {
+                IntegerStepperRow(
+                    title: String(localized: "Max clipboard history size:"),
+                    value: $maxHistorySize,
+                    range: 1...10_000,
+                    suffix: String(localized: "items")
+                )
+
+                Picker(String(localized: "Sort history order by:"), selection: $reorderClipsAfterPasting) {
+                    Text(String(localized: "Date Created")).tag(false)
+                    Text(String(localized: "Last Used")).tag(true)
+                }
+                .pickerStyle(.menu)
+            }
+
+            Section(String(localized: "Appearance")) {
+                Picker(String(localized: "Status Bar icon style:"), selection: $showStatusItem) {
+                    Text(String(localized: "None")).tag(MenuManager.StatusType.none.rawValue)
+                    Text(String(localized: "Black")).tag(MenuManager.StatusType.black.rawValue)
+                    Text(String(localized: "White")).tag(MenuManager.StatusType.white.rawValue)
+                }
+                .pickerStyle(.menu)
             }
         }
-        // Resize view
-        let frame = window!.frame
-        var newFrame = window!.frameRect(forContentRect: newView.frame)
-        newFrame.origin = frame.origin
-        newFrame.origin.y += frame.height - newFrame.height - toolBar.frame.height
-        newFrame.size.height += toolBar.frame.height
-        window?.setFrame(newFrame, display: true)
-        window?.contentView?.addSubview(newView)
+    }
+}
+
+struct MenuPreferencePane: View {
+    @AppStorage(Constants.UserDefaults.numberOfItemsPlaceInline)
+    private var numberOfItemsPlaceInline = 0
+    @AppStorage(Constants.UserDefaults.numberOfItemsPlaceInsideFolder)
+    private var numberOfItemsPlaceInsideFolder = 10
+    @AppStorage(Constants.UserDefaults.maxMenuItemTitleLength)
+    private var maxMenuItemTitleLength = 20
+    @AppStorage(Constants.UserDefaults.showIconInTheMenu)
+    private var showIconInTheMenu = true
+    @AppStorage(Constants.UserDefaults.menuItemsAreMarkedWithNumbers)
+    private var menuItemsAreMarkedWithNumbers = true
+    @AppStorage(Constants.UserDefaults.menuItemsTitleStartWithZero)
+    private var menuItemsTitleStartWithZero = false
+    @AppStorage(Constants.UserDefaults.addNumericKeyEquivalents)
+    private var addNumericKeyEquivalents = false
+    @AppStorage(Constants.UserDefaults.copySameHistory)
+    private var copySameHistory = true
+    @AppStorage(Constants.UserDefaults.overwriteSameHistory)
+    private var overwriteSameHistory = true
+    @AppStorage(Constants.UserDefaults.addClearHistoryMenuItem)
+    private var addClearHistoryMenuItem = true
+    @AppStorage(Constants.UserDefaults.showAlertBeforeClearHistory)
+    private var showAlertBeforeClearHistory = true
+    @AppStorage(Constants.UserDefaults.showToolTipOnMenuItem)
+    private var showToolTipOnMenuItem = true
+    @AppStorage(Constants.UserDefaults.maxLengthOfToolTip)
+    private var maxLengthOfToolTip = 200
+    @AppStorage(Constants.UserDefaults.showImageInTheMenu)
+    private var showImageInTheMenu = true
+    @AppStorage(Constants.UserDefaults.showColorPreviewInTheMenu)
+    private var showColorPreviewInTheMenu = true
+    @AppStorage(Constants.UserDefaults.thumbnailWidth)
+    private var thumbnailWidth = 100
+    @AppStorage(Constants.UserDefaults.thumbnailHeight)
+    private var thumbnailHeight = 32
+
+    var body: some View {
+        PreferenceForm {
+            Section(String(localized: "History Menu")) {
+                IntegerStepperRow(
+                    title: String(localized: "Number of items place inline:"),
+                    value: $numberOfItemsPlaceInline,
+                    range: 0...100,
+                    suffix: String(localized: "items")
+                )
+                IntegerStepperRow(
+                    title: String(localized: "Number of items place inside a folder:"),
+                    value: $numberOfItemsPlaceInsideFolder,
+                    range: 1...100,
+                    suffix: String(localized: "items")
+                )
+                IntegerStepperRow(
+                    title: String(localized: "Number of characters in the menu:"),
+                    value: $maxMenuItemTitleLength,
+                    range: 3...500,
+                    suffix: String(localized: "chars")
+                )
+            }
+
+            Section(String(localized: "Menu Items")) {
+                Toggle(String(localized: "Display icons in menu items"), isOn: $showIconInTheMenu)
+                Toggle(String(localized: "Mark menu items with numbers"), isOn: $menuItemsAreMarkedWithNumbers)
+                Toggle(String(localized: "Menu items' title starts with 0"), isOn: $menuItemsTitleStartWithZero)
+                    .disabled(!menuItemsAreMarkedWithNumbers)
+                Toggle(String(localized: "Add key equivalents to numeric keys"), isOn: $addNumericKeyEquivalents)
+            }
+
+            Section(String(localized: "Duplicate History")) {
+                Toggle(String(localized: "Place already copied history at the top"), isOn: $copySameHistory)
+                Toggle(String(localized: "Move instead of copying (removes the older one from the list)"), isOn: $overwriteSameHistory)
+                    .disabled(!copySameHistory)
+            }
+
+            Section(String(localized: "Clear History")) {
+                Toggle(String(localized: "Add a menu item to clear clipboard history"), isOn: $addClearHistoryMenuItem)
+                Toggle(String(localized: "Show alert panel before clear history"), isOn: $showAlertBeforeClearHistory)
+                    .disabled(!addClearHistoryMenuItem)
+            }
+
+            Section(String(localized: "Tool Tips")) {
+                Toggle(String(localized: "Show tool tip on a menu item"), isOn: $showToolTipOnMenuItem)
+                IntegerStepperRow(
+                    title: String(localized: "Max length of tool tip string:"),
+                    value: $maxLengthOfToolTip,
+                    range: 1...10_000,
+                    suffix: String(localized: "chars")
+                )
+                .disabled(!showToolTipOnMenuItem)
+            }
+
+            Section(String(localized: "Image Previews")) {
+                Toggle(String(localized: "Show Image"), isOn: $showImageInTheMenu)
+                Toggle(String(localized: "Show color code preview"), isOn: $showColorPreviewInTheMenu)
+                IntegerStepperRow(
+                    title: String(localized: "Thumbnail width:"),
+                    value: $thumbnailWidth,
+                    range: 16...512,
+                    suffix: String(localized: "px")
+                )
+                .disabled(!showImageInTheMenu)
+                IntegerStepperRow(
+                    title: String(localized: "Thumbnail height:"),
+                    value: $thumbnailHeight,
+                    range: 16...512,
+                    suffix: String(localized: "px")
+                )
+                .disabled(!showImageInTheMenu)
+            }
+        }
+    }
+}
+
+struct IntegerStepperRow: View {
+    let title: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let suffix: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Stepper(value: $value, in: range) {
+                Text("\(value) \(suffix)")
+                    .monospacedDigit()
+                    .frame(minWidth: 92, alignment: .trailing)
+            }
+        }
     }
 }

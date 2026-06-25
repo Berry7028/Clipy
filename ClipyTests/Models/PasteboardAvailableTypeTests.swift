@@ -68,6 +68,16 @@ struct PasteboardAvailableTypeTests {
     }
 
     @Test
+    func availableTypesTreatsPNGAsImageStoreType() {
+        let availableTypes = PasteboardAvailableType.availableTypes(
+            from: [.png],
+            storeAvailableTypes: [.tiff],
+            ignoresConcealedType: false
+        )
+        #expect(availableTypes == [.png])
+    }
+
+    @Test
     func availableTypesUsesTIFFWhenOnlyTIFFTypesAreAvailable() {
         let availableTypes = PasteboardAvailableType.availableTypes(
             from: [.tiff, .deprecatedTIFF],

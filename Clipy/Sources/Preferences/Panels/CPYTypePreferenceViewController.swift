@@ -7,37 +7,73 @@
 //
 //  Created by Econa77 on 2016/03/17.
 //
-//  Copyright © 2015-2018 Clipy Project.
+//  Copyright (c) 2015-2018 Clipy Project.
 //
 
 import Cocoa
+import SwiftUI
 
-final class CPYTypePreferenceViewController: NSViewController {
-    // MARK: - Properties
-    @objc var storeTypes: NSMutableDictionary!
+final class CPYTypePreferenceViewController: NSViewController {}
 
-    // MARK: - Initialize
-    override func loadView() {
-        if let dictionary = AppEnvironment.current.defaults.object(forKey: Constants.UserDefaults.storeTypes) as? [String: Any] {
-            storeTypes = NSMutableDictionary(dictionary: dictionary)
-        } else {
-            storeTypes = NSMutableDictionary()
+struct ClipboardTypesPreferencePane: View {
+    @AppStorage(Constants.UserDefaults.ignoreConcealedPasteboardType)
+    private var ignoreConcealedPasteboardType = false
+
+    private let defaults = AppEnvironment.current.defaults
+
+    var body: some View {
+        PreferenceForm {
+            Section(String(localized: "Select clipboard types to store:")) {
+                ForEach(PasteboardAvailableType.allCases, id: \.rawValue) { type in
+                    Toggle(title(for: type), isOn: storeTypeBinding(for: type))
+                }
+            }
+
+            Section(String(localized: "Privacy")) {
+                Toggle(String(localized: "Ignore clipboard data marked as Concealed"), isOn: $ignoreConcealedPasteboardType)
+                Text(String(localized: "For confidential data, such as from password managers."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
-        super.loadView()
-        PasteboardAvailableType.allCases.forEach { availableType in
-            storeTypes.addObserver(self, forKeyPath: availableType.rawValue, options: .new, context: nil)
+    }
+}
+
+private extension ClipboardTypesPreferencePane {
+    func title(for type: PasteboardAvailableType) -> String {
+        switch type {
+        case .string:
+            return String(localized: "Plain Text")
+        case .rtf:
+            return String(localized: "Rich Text Format (RTF)")
+        case .rtfd:
+            return String(localized: "Rich Text Format Directory (RTFD)")
+        case .pdf:
+            return String(localized: "PDF")
+        case .filenames:
+            return String(localized: "Filenames")
+        case .url:
+            return String(localized: "URL")
+        case .tiff:
+            return String(localized: "Images (PNG/TIFF)")
         }
     }
 
-    deinit {
-        PasteboardAvailableType.allCases.forEach { availableType in
-            storeTypes.removeObserver(self, forKeyPath: availableType.rawValue)
-        }
+    func storeTypeBinding(for type: PasteboardAvailableType) -> Binding<Bool> {
+        Binding(
+            get: {
+                storeTypesDictionary()[type.rawValue]?.boolValue ?? true
+            },
+            set: { isEnabled in
+                var storeTypes = storeTypesDictionary()
+                storeTypes[type.rawValue] = NSNumber(value: isEnabled)
+                defaults.set(storeTypes, forKey: Constants.UserDefaults.storeTypes)
+                defaults.synchronize()
+            }
+        )
     }
 
-    // swiftlint:disable:next block_based_kvo
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
-        guard let dictionary = object as? NSMutableDictionary, dictionary == storeTypes else { return }
-        AppEnvironment.current.defaults.set(storeTypes, forKey: Constants.UserDefaults.storeTypes)
+    func storeTypesDictionary() -> [String: NSNumber] {
+        defaults.object(forKey: Constants.UserDefaults.storeTypes) as? [String: NSNumber] ?? [:]
     }
 }

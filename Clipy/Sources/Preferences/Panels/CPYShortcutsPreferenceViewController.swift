@@ -7,66 +7,118 @@
 //
 //  Created by Econa77 on 2016/02/26.
 //
-//  Copyright © 2015-2018 Clipy Project.
+//  Copyright (c) 2015-2018 Clipy Project.
 //
 
 import Cocoa
 import KeyHolder
 import Magnet
+import SwiftUI
 
-class CPYShortcutsPreferenceViewController: NSViewController {
+final class CPYShortcutsPreferenceViewController: NSViewController {}
 
-    // MARK: - Properties
-    @IBOutlet private weak var mainShortcutRecordView: RecordView!
-    @IBOutlet private weak var historyShortcutRecordView: RecordView!
-    @IBOutlet private weak var snippetShortcutRecordView: RecordView!
-    @IBOutlet private weak var clearHistoryShortcutRecordView: RecordView!
+struct ShortcutsPreferencePane: View {
+    var body: some View {
+        PreferenceForm {
+            Section(String(localized: "Menu")) {
+                ShortcutPreferenceRow(title: String(localized: "Main"), target: .main)
+                ShortcutPreferenceRow(title: String(localized: "History"), target: .history)
+                ShortcutPreferenceRow(title: String(localized: "Snippet"), target: .snippet)
+            }
 
-    // MARK: - Initialize
-    override func loadView() {
-        super.loadView()
-        mainShortcutRecordView.delegate = self
-        historyShortcutRecordView.delegate = self
-        snippetShortcutRecordView.delegate = self
-        clearHistoryShortcutRecordView.delegate = self
-        prepareHotKeys()
-    }
-
-}
-
-// MARK: - Shortcut
-private extension CPYShortcutsPreferenceViewController {
-    func prepareHotKeys() {
-        mainShortcutRecordView.keyCombo = AppEnvironment.current.hotKeyService.mainKeyCombo
-        historyShortcutRecordView.keyCombo = AppEnvironment.current.hotKeyService.historyKeyCombo
-        snippetShortcutRecordView.keyCombo = AppEnvironment.current.hotKeyService.snippetKeyCombo
-        clearHistoryShortcutRecordView.keyCombo = AppEnvironment.current.hotKeyService.clearHistoryKeyCombo
+            Section(String(localized: "History")) {
+                ShortcutPreferenceRow(title: String(localized: "Clear History"), target: .clearHistory)
+            }
+        }
     }
 }
 
-// MARK: - RecordView Delegate
-extension CPYShortcutsPreferenceViewController: RecordViewDelegate {
-    func recordViewShouldBeginRecording(_ recordView: RecordView) -> Bool {
-        return true
+private struct ShortcutPreferenceRow: View {
+    let title: String
+    let target: ShortcutRecordTarget
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            ShortcutRecordView(target: target)
+                .frame(width: 180, height: 28)
+        }
+    }
+}
+
+private struct ShortcutRecordView: NSViewRepresentable {
+    let target: ShortcutRecordTarget
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(target: target)
     }
 
-    func recordView(_ recordView: RecordView, canRecordKeyCombo keyCombo: KeyCombo) -> Bool {
-        return true
+    func makeNSView(context: Context) -> RecordView {
+        let recordView = RecordView(frame: .zero)
+        recordView.delegate = context.coordinator
+        recordView.keyCombo = target.currentKeyCombo
+        return recordView
     }
 
-    func recordView(_ recordView: RecordView, didChangeKeyCombo keyCombo: KeyCombo?) {
-        switch recordView {
-        case mainShortcutRecordView:
-            AppEnvironment.current.hotKeyService.change(with: .main, keyCombo: keyCombo)
-        case historyShortcutRecordView:
-            AppEnvironment.current.hotKeyService.change(with: .history, keyCombo: keyCombo)
-        case snippetShortcutRecordView:
-            AppEnvironment.current.hotKeyService.change(with: .snippet, keyCombo: keyCombo)
-        case clearHistoryShortcutRecordView:
-            AppEnvironment.current.hotKeyService.changeClearHistoryKeyCombo(keyCombo)
-        default: break
+    func updateNSView(_ nsView: RecordView, context: Context) {
+        context.coordinator.target = target
+        nsView.delegate = context.coordinator
+        nsView.keyCombo = target.currentKeyCombo
+    }
+
+    final class Coordinator: NSObject, RecordViewDelegate {
+        var target: ShortcutRecordTarget
+
+        init(target: ShortcutRecordTarget) {
+            self.target = target
+        }
+
+        func recordViewShouldBeginRecording(_ recordView: RecordView) -> Bool {
+            true
+        }
+
+        func recordView(_ recordView: RecordView, canRecordKeyCombo keyCombo: KeyCombo) -> Bool {
+            true
+        }
+
+        func recordView(_ recordView: RecordView, didChangeKeyCombo keyCombo: KeyCombo?) {
+            target.update(keyCombo)
+        }
+
+        func recordViewDidEndRecording(_ recordView: RecordView) {}
+    }
+}
+
+enum ShortcutRecordTarget {
+    case main
+    case history
+    case snippet
+    case clearHistory
+
+    var currentKeyCombo: KeyCombo? {
+        switch self {
+        case .main:
+            return AppEnvironment.current.hotKeyService.mainKeyCombo
+        case .history:
+            return AppEnvironment.current.hotKeyService.historyKeyCombo
+        case .snippet:
+            return AppEnvironment.current.hotKeyService.snippetKeyCombo
+        case .clearHistory:
+            return AppEnvironment.current.hotKeyService.clearHistoryKeyCombo
         }
     }
 
-    func recordViewDidEndRecording(_ recordView: RecordView) {}
+    func update(_ keyCombo: KeyCombo?) {
+        switch self {
+        case .main:
+            AppEnvironment.current.hotKeyService.change(with: .main, keyCombo: keyCombo)
+        case .history:
+            AppEnvironment.current.hotKeyService.change(with: .history, keyCombo: keyCombo)
+        case .snippet:
+            AppEnvironment.current.hotKeyService.change(with: .snippet, keyCombo: keyCombo)
+        case .clearHistory:
+            AppEnvironment.current.hotKeyService.changeClearHistoryKeyCombo(keyCombo)
+        }
+    }
 }

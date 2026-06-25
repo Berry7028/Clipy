@@ -163,14 +163,15 @@ struct PasteboardContentTests {
     }
 
     @Test
-    func imageInitializerStoresTiffAsset() throws {
+    func imageInitializerStoresPngAssetWhenPossible() throws {
         let image = NSImage.create(with: .red, size: NSSize(width: 10, height: 10))
         let content = try #require(PasteboardContent(image: image))
 
-        #expect(content.types == [.tiff])
+        #expect(content.types == [.png])
         #expect(content.assets.count == 1)
-        #expect(content.assets.first?.type == .tiff)
+        #expect(content.assets.first?.type == .png)
         #expect(content.assets.first?.data.isEmpty == false)
+        #expect(content.title == "Image")
     }
 
     @Test
@@ -228,7 +229,7 @@ struct PasteboardContentTests {
     }
 
     @Test
-    func thumbnailImageIsCreatedFromStoredTiffData() {
+    func thumbnailImageIsCreatedFromStoredImageData() {
         let defaults = UserDefaults.standard
         let previousWidth = defaults.object(forKey: Constants.UserDefaults.thumbnailWidth)
         let previousHeight = defaults.object(forKey: Constants.UserDefaults.thumbnailHeight)

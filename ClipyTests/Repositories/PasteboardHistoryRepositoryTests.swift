@@ -146,6 +146,8 @@ struct PasteboardHistoryRepositoryTests {
         repository.save(id: colorID, content: colorContent, updateAt: 2)
         repository.save(id: imageID, content: imageContent, updateAt: 3)
 
+        #expect(repository.fetchHistory(id: imageID)?.title == "Image")
+
         let details = repository.fetchHistoryDetails(
             ascending: false,
             includesThumbnailAsset: true,
