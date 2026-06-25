@@ -93,8 +93,12 @@ final class ClipMenuItemView: NSView {
     override func mouseUp(with event: NSEvent) {
         guard let item = enclosingMenuItem, let menu = item.menu else { return }
         let index = menu.index(of: item)
+        guard index >= 0 else { return }
+        // Dismiss the menu first, then perform the action on the next run-loop pass so focus has
+        // returned to the previously active app before the paste is triggered. Performing it
+        // synchronously here pastes into nothing because the menu is still tracking.
         menu.cancelTracking()
-        if index >= 0 {
+        DispatchQueue.main.async {
             menu.performActionForItem(at: index)
         }
     }
