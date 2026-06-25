@@ -18,6 +18,19 @@ extension DatabaseMigrator {
     mutating func registerMigration() {
         registerMigrationV1()
         registerMigrationV2()
+        registerMigrationV3()
+    }
+
+    mutating func registerMigrationV3() {
+        registerMigration("Add sourceAppBundleID to pasteboardHistories") { database in
+            try #sql(
+                """
+                ALTER TABLE "pasteboardHistories"
+                ADD COLUMN "sourceAppBundleID" TEXT
+                """
+            )
+            .execute(database)
+        }
     }
 
     mutating func registerMigrationV1() {

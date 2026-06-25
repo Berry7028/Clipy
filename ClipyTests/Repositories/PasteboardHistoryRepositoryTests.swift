@@ -264,7 +264,8 @@ private extension PasteboardHistory {
             title: title,
             pasteboardTypes: [.string],
             updateAt: updateAt,
-            deviceID: CPYUtilities.deviceID
+            deviceID: CPYUtilities.deviceID,
+            sourceAppBundleID: nil
         )
     }
 }

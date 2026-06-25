@@ -25,6 +25,8 @@ struct PasteboardHistory: Identifiable, Equatable {
     let pasteboardTypes: [NSPasteboard.PasteboardType]
     let updateAt: Int
     let deviceID: String?
+    /// Bundle identifier of the application the clip was copied from (nil for legacy/unknown).
+    let sourceAppBundleID: String?
 
     var primaryType: NSPasteboard.PasteboardType? {
         pasteboardTypes.first
